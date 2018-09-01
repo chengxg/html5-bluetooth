@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+		<title>html5+ android蓝牙操作</title>
+	</head>
+
+	<body>
+		<div id="app">
+			<input type="button" name="" id="" value="打开蓝牙" @click="turnOnBluetooth" />
+			<input type="button" name="" id="" value="关闭蓝牙" @click="turnOffBluetooth" />
+			<input type="button" name="" id="" value="已配对的设备" @click="getPairedDevices" />
+			<input type="button" name="" id="" value="搜索蓝牙设备" @click="discoveryNewDevice" />
+			<div>
+				蓝牙状态：
+				<pre>{{bluetoothState}}</pre>
+			</div>
+			<div>
+				消息：{{msg}}
+			</div>
+			<div>
+				<input type="button" value="断开连接" @click="disConnDevice" />
+			</div>
+			已配对的设备：
+			<br>
+			<ul>
+				<li v-for="device in pairedDevices">
+					名称：{{device.name}}<br> 地址：{{device.address}}
+					<br>
+					<input type="button" value="连接" @click="connDevice(device.address)" />
+				</li>
+			</ul>
+			发现的设备：<br>
+			<ul>
+				<li v-for="device in newDevices">
+					名称：{{device.name}}<br> 地址：{{device.address}}<br>
+					<input type="button" value="连接" @click="connDevice(device.address)" />
+				</li>
+			</ul>
+			<div>
+				发送数据：
+				<textarea cols="20" rows="4" v-model="sendData"></textarea>
+				<input type="button" value="发送" @click="onSendData" />
+			</div>
+			<br>
+			<div style="margin-bottom: 100px;">接收的数据：
+				<input type="button" value="清空" @click="receiveDataArr = [];" />
+				<div style="width: 100%;min-height: 50px;">byte数组:
+					<span v-for="data in receiveDataArr">
+						{{data}}&nbsp;
+					</span>
+				</div>
+				<div style="width: 100%;min-height: 50px;word-wrap:break-word;">
+					对应的string字符串:<br> {{receiveDataStr}}
+				</div>
+			</div>
+		</div>
+
+		<script src="js/vue.js" type="text/javascript" charset="utf-8"></script>
+		<script type="text/javascript" src="js/BluetoothTool.js"></script>
+		<script type="text/javascript">
+			// 监听plusready事件
+			document.addEventListener("plusready", function() {
+				var bluetoothTool = null;
+				var vm = new Vue({
+					"el": "#app",
+					data: function() {
+						return {
+							bluetoothState: {},
+							pairedDevices: [],
+							newDevices: [],
+							receiveDataArr: [],
+							sendData: "",
+							msg: ""
+						}
+					},
+					computed: {
+						receiveDataStr: function() {
+							return String.fromCharCode.apply(String, this.receiveDataArr);
+						},
+						bluetoothStatusDesc: function() {
+							return this.bluetoothStatus ? "已开启" : "已关闭";
+						}
+					},
+					created: function() {
+						let that = this;
+						bluetoothTool = BluetoothTool();
+						this.bluetoothState = bluetoothTool.state;
+						bluetoothTool.init({
+							listenBTStatusCallback: function(state) {
+								that.msg = "蓝牙状态: " + state;
+							},
+							discoveryDeviceCallback: function(newDevice) {
+								that.newDevices.push(newDevice);
+							},
+							discoveryFinishedCallback: function() {
+								that.msg = "搜索完成";
+							},
+							readDataCallback: function(dataByteArr) {
+								if(that.receiveDataArr.length >= 200) {
+									that.receiveDataArr = [];
+								}
+								that.receiveDataArr.push.apply(that.receiveDataArr, dataByteArr);
+							},
+							connExceptionCallback: function(e) {
+								console.log(e);
+								that.msg = "设备连接失败";
+							}
+						});
+					},
+					methods: {
+						turnOnBluetooth: function() {
+							bluetoothTool.turnOnBluetooth();
+						},
+						turnOffBluetooth: function() {
+							bluetoothTool.turnOffBluetooth();
+						},
+						getPairedDevices: function() {
+							this.pairedDevices = bluetoothTool.getPairedDevices();
+						},
+						discoveryNewDevice: function() {
+							this.newDevices = [];
+							bluetoothTool.discoveryNewDevice();
+						},
+						cancelDiscovery: function() {
+							bluetoothTool.cancelDiscovery();
+						},
+						connDevice: function(address) {
+							bluetoothTool.connDevice(address);
+						},
+						disConnDevice: function() {
+							bluetoothTool.disConnDevice();
+						},
+						onSendData: function() {
+							bluetoothTool.sendData(this.sendData);
+						},
+						
+					}
+				});
+			}, false);
+		</script>
+
+	</body>
+
+</html>
