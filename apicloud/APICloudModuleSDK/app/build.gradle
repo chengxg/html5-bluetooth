@@ -1,0 +1,58 @@
+apply plugin: 'com.android.application'
+
+android {
+
+    compileSdkVersion Integer.parseInt(project.ANDROID_BUILD_SDK_VERSION)
+    buildToolsVersion project.ANDROID_BUILD_TOOLS_VERSION
+
+    //useLibrary 'org.apache.http.legacy'
+
+    defaultConfig {
+        applicationId project.ANDROID_BUILD_APP_PKG
+        targetSdkVersion Integer.parseInt(project.ANDROID_BUILD_TARGET_SDK_VERSION)
+        versionCode = 1
+        versionName project.ANDROID_BUILD_VERSION_NAME
+	    multiDexEnabled true
+        minSdkVersion 14
+    }
+
+    lintOptions {
+        abortOnError false
+		checkReleaseBuilds false
+    }
+
+    aaptOptions {
+        cruncherEnabled false
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    sourceSets{
+        main{
+            jniLibs.srcDirs = ['libs']
+        }
+    }
+
+}
+
+repositories{
+    flatDir{
+        dirs 'libs'
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'com.android.support:support-v4:28.0.0'
+    implementation 'com.android.support:multidex:1.0.3'
+    //5个模块
+    implementation project(':moduleDemo')
+    implementation project(':moduleScrollPicture')
+    implementation project(':moduleSyncInterface')
+    implementation project(':moduleRefresh')
+    implementation project(':moduleAppdelegate')
+    implementation project(':moduleBluetoothSerial')
+}

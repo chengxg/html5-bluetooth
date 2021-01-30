@@ -1,0 +1,19 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+
+    package="com.apicloud.sdk.moduledemo">
+
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <application android:allowBackup="true"
+        android:label="@string/app_name"
+        android:supportsRtl="true">
+
+        <activity
+            android:name="com.apicloud.moduleDemo.DemoActivity"
+            android:screenOrientation="portrait"
+            android:theme="@android:style/Theme.DeviceDefault.Light.NoActionBar"
+            android:configChanges="orientation|locale" />
+
+    </application>
+
+</manifest>

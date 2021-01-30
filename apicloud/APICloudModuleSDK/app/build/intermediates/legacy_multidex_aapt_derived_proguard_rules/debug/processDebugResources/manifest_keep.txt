@@ -1,0 +1,4 @@
+# Referenced at D:\development\my-project\apicloud\APICloudModuleSDK\app\build\intermediates\merged_manifests\debug\AndroidManifest.xml:30
+-keep class android.support.v4.app.CoreComponentFactory { <init>(); }
+# Referenced at D:\development\my-project\apicloud\APICloudModuleSDK\app\build\intermediates\merged_manifests\debug\AndroidManifest.xml:30
+-keep class com.uzmap.pkg.uzapp.UZApplication { <init>(); }

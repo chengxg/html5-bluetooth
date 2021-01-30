@@ -1,0 +1,5 @@
+com.apicloud.sdk.moduledemo
+id btn
+id text
+layout mo_demo_main_activity
+string app_name

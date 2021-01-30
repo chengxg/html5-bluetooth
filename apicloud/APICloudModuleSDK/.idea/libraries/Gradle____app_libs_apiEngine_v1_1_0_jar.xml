@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="Gradle: ./app/libs/apiEngine v1.1.0.jar">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/app/libs/apiEngine v1.1.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

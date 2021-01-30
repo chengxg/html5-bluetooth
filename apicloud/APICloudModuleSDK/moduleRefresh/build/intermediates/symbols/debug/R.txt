@@ -1,0 +1,2 @@
+int drawable mo_cus_refresh_default 0x7f080001
+int string app_name 0x7f140001

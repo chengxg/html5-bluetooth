@@ -1,0 +1,8 @@
+R_DEF: Internal format may change without notice
+local
+drawable mo_scrollpicture_img_switcher_bg
+drawable mo_scrollpicture_img_switcher_bg0
+drawable mo_scrollpicture_img_switcher_bg1
+drawable mo_scrollpicture_img_switcher_bg2
+drawable mo_scrollpicture_img_switcher_bg3
+string app_name

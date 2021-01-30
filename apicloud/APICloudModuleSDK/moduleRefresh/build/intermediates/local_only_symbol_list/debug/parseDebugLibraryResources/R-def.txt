@@ -1,0 +1,4 @@
+R_DEF: Internal format may change without notice
+local
+drawable mo_cus_refresh_default
+string app_name
