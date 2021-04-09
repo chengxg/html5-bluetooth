@@ -1,2 +1,0 @@
-com.apicloud.syncInterface
-string app_name

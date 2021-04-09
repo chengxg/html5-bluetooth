@@ -1,4 +1,0 @@
-int id btn 0x7f0b0001
-int id text 0x7f0b0002
-int layout mo_demo_main_activity 0x7f0e0001
-int string app_name 0x7f140001

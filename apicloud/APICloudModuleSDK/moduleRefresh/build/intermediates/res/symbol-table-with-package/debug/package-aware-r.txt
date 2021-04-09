@@ -1,3 +1,0 @@
-com.apicloud.moduleRefresh
-drawable mo_cus_refresh_default
-string app_name
