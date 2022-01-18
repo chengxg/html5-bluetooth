@@ -1,0 +1,12 @@
+{
+  "name": "cxgBluetoothBase",
+  "class": "com.github.chengxg.bluetooth.ModuleBluetoothBase"
+},
+{
+  "name": "cxgBluetoothServer",
+  "class": "com.github.chengxg.bluetooth.ModuleBluetoothServer"
+},
+{
+  "name": "cxgBluetoothClient",
+  "class": "com.github.chengxg.bluetooth.ModuleBluetoothClient"
+}

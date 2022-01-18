@@ -1,0 +1,60 @@
+<!DOCTYPE HTML>
+<html lang="zh-cn">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="maximum-scale=1.0, minimum-scale=1.0, user-scalable=0, initial-scale=1.0, width=device-width" />
+  <meta name="format-detection" content="telephone=no, email=no, date=no, address=no">
+  <title>串口蓝牙入口</title>
+  <link rel="stylesheet" type="text/css" href="css/api.css" />
+  <script type="text/javascript" src="script/vue.js"></script>
+  <style>
+    body {
+      padding: 10px 5px;
+      width: auto;
+    }
+
+    p {
+      color: #999;
+      padding: 5px;
+    }
+
+    button {
+      margin-left: 10px;
+    }
+
+    input[type=text] {
+      border: 1px solid #ccc;
+      padding: 4px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app" style="padding: 20px 5px;">
+    <a href="./bluetooth.html">多连接蓝牙串口domo</a><br><br><br>
+
+    自己的页面地址: <input type="text" id="url" style="width:240px;" placeholder="http://xxx.xxx.xxx" /><br>
+    <button id="toGo" type="button" onclick="goSelf()">前往</button>
+  </div>
+
+  <script type="text/javascript">
+    let initUrl = window.localStorage.getItem("url");
+    if (initUrl) {
+      document.getElementById("url").value = initUrl;
+    }
+    
+    function goSelf() {
+      let url = document.getElementById("url").value.trim();
+      if (!url) {
+        alert("请输入网址");
+        return;
+      }
+      window.localStorage.setItem("url", url);
+      location.href = url;
+    }
+  </script>
+</body>
+
+</html>

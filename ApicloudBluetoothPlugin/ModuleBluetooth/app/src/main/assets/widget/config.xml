@@ -1,0 +1,19 @@
+<widget id="A0000000000001"  version="0.0.1">
+    <name>ModuleDemo</name>
+    <description>A sample of APICloud module extension.</description>
+    <author email="developer@apicloud.com" href="http://www.apicloud.com">
+        developer
+    </author>
+    <content src="index.html" />
+    <access origin="*" />
+    <allow-intent href="http://*/*"/>
+    <allow-intent href="https://*/*"/>
+    <allow-navigation href="https://*/*"/>
+    <allow-navigation href="http://*/*"/>
+    <allow-intent href="tel:*"/>
+    <allow-intent href="sms:*"/>
+    <allow-intent href="mailto:*"/>
+    <allow-intent href="geo:*"/>
+    <preference name="bounces" value="true" />
+    <preference name="debug" value="true" />
+</widget>

@@ -1,0 +1,12 @@
+cxgBluetooth 模块
+
+--1.0.5版本更新note：
+	1. 接口文档描述错误修改。
+
+
+--1.1.0版本更新note：
+	1.发送或接收字符串时, 添加charset字段。
+	影响接口:sendData, setReadDataCallback,sendDataServerClient, setReadDataCallbackServerClient，
+	具体见文档。
+	
+--1.2.0 设为免费模块

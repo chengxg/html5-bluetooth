@@ -1,0 +1,1103 @@
+<!DOCTYPE HTML>
+<html lang="zh-cn">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="maximum-scale=1.0, minimum-scale=1.0, user-scalable=0, initial-scale=1.0, width=device-width" />
+    <meta name="format-detection" content="telephone=no, email=no, date=no, address=no">
+    <title>测试串口蓝牙</title>
+    <link rel="stylesheet" type="text/css" href="css/api.css" />
+    <script type="text/javascript" src="script/vue.js"></script>
+    <style>
+        body {
+            padding: 10px 5px;
+            width: auto;
+        }
+
+        p {
+            color: #999;
+            padding: 5px;
+        }
+
+        button {
+            margin-left: 10px;
+        }
+
+        input[type=text] {
+            border: 1px solid #ccc;
+            padding: 4px;
+        }
+
+        .msg-list {
+            border: 1px solid #ccc;
+            padding: 5px;
+            overflow: auto;
+            height: 150px;
+        }
+
+        .msg-item {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            bottom: 1px dashed #eee;
+            font-size: 12px;
+        }
+
+        .msg-item.error {
+            color: red;
+        }
+
+        .msg-item.success {
+            color: #4caf50;
+        }
+
+        .msg-item .msg-item-name {
+            width: 120px;
+        }
+
+        .msg-item .msg-item-msg {
+            flex: 1;
+            width: 200px;
+        }
+
+        .device-item {
+            border: 1px solid #ccc;
+            padding: 5px;
+            margin-bottom: 5px;
+            font-size: 12px;
+        }
+
+        .device-info {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            height: 40px;
+        }
+
+        .device-info.active {
+            color: #4caf50;
+        }
+
+        .device-info .device-name {
+            width: 100px;
+        }
+
+        .device-info .device-address {
+            width: 120px;
+        }
+
+        .device-info .device-option {
+            flex: 1;
+            text-align: right;
+        }
+
+        .device-data {}
+
+        .device-write {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .device-write textarea {
+            flex: 1;
+            border: 1px solid #ccc;
+            padding: 5px;
+            line-height: 20px;
+            font-size: 14px;
+            letter-spacing: 1px;
+            overflow: auto;
+        }
+
+        .device-write .device-setting {
+            width: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-wrap;
+            align-items: flex-start;
+            padding: 5px;
+        }
+
+        .device-read {
+            margin-top: 5px;
+        }
+
+        .device-read .device-read-wrap {
+            border: 1px solid #4caf50;
+            padding: 5px;
+        }
+
+        .device-read .device-read-box {
+            line-height: 20px;
+            font-size: 14px;
+            letter-spacing: 1px;
+            overflow-y: scroll;
+            overflow-x: hidden;
+            height: 150px;
+        }
+
+        .device-read .device-setting {
+            display: flex;
+            justify-content: flex-start;
+            padding: 5px;
+        }
+
+        .scroll-box::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .scroll-box::-webkit-scrollbar-track {
+            border-radius: 5px;
+            background-color: white;
+        }
+
+        .scroll-box::-webkit-scrollbar-thumb {
+            border-radius: 5px;
+            background-color: #ddd;
+        }
+
+        .server-section {
+            margin-top: 20px;
+        }
+    </style>
+    <style>
+        .loading {
+            width: 60px;
+            margin: 0 auto;
+        }
+
+        .loading span {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            margin-right: 2px;
+            border-radius: 50%;
+            background: #4caf50;
+            animation: load 1.04s ease infinite;
+        }
+
+        .loading span:last-child {
+            margin-right: 0px;
+        }
+
+        @keyframes load {
+            0% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0;
+            }
+        }
+
+        .loading span:nth-child(1) {
+            animation-delay: 0.13s;
+        }
+
+        .loading span:nth-child(2) {
+            animation-delay: 0.26s;
+        }
+
+        .loading span:nth-child(3) {
+            animation-delay: 0.39s;
+        }
+
+        .loading span:nth-child(4) {
+            animation-delay: 0.52s;
+        }
+
+        .loading span:nth-child(5) {
+            animation-delay: 0.65s;
+        }
+    </style>
+</head>
+
+<body>
+    <script type="text/template" id="Client">
+        <div v-if="client">
+            <div class="device-edit-uuid">
+                UUID: <input type="text" v-model="client.UUID" style="width:200px;">
+                <template v-if="!client.isConnecting">
+                    <button type="button" v-if="!client.isConnected" @click="connectSPP(client)">连接</button>
+                    <button type="button" v-else @click="disconnectSPP(client)">断开</button>
+                    <button type="button" v-if="!client.isConnected" @click="removeClient">移除</button>
+                </template>
+                <template v-else>
+                    <div class="loading">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </template>
+            </div>
+            <div class="device-data" v-if="client.isConnected">
+                <div class="device-write">
+                    <textarea rows="3" v-model="client.sendDataStr"
+                        placeholder="hex格式: 01 23 AB CD EF"></textarea>
+                    <div class="device-setting">
+                        <select v-model="client.charset">
+                            <option>UTF-8</option>
+                            <option>GBK</option>
+                        </select>
+                        <button type="button" @click="sendDataSPP(client,false)"
+                            style="margin-bottom:8px;">发送string</button>
+                        <button type="button" @click="sendDataSPP(client,true)">发送hex</button>
+                    </div>
+                </div>
+                <div class="device-read">
+                    <div class="device-read-wrap" ref="readDataScroll">
+                        <div ref="readDataScroll" class="device-read-box scroll-box">
+                            <div class="read-msg-item" v-for="(msg,idx) in client.receiveDataArr" :key="idx">
+                                {{msg}}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="device-setting">
+                        <div>
+                            接收格式:
+                            <span v-if="client.isReturnHex">hex</span>
+                            <span v-else>string({{client.returnStrCharset}})</span>
+                        </div>
+                        返回编码:
+                        <select v-model="client.returnStrCharset" @change="setReadDataCallbackSPP(client,false)">
+                            <option>UTF-8</option>
+                            <option>GBK</option>
+                        </select>
+                        <button type="button" @click="setReadDataCallbackSPP(client,false)">返回string</button>
+                        <button type="button" @click="setReadDataCallbackSPP(client,true)">返回hex</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </script>
+    <script type="text/template" id="Device">
+        <div class="device-item" v-if="device">
+            <div class="device-info">
+                <div class="device-name">{{device.name}}</div>
+                <div class="device-address">{{device.address}}</div>
+                <div class="device-option">
+                    <button type="button" @click="createClient(device)">添加客户端</button>
+                </div>
+            </div>
+            <div class="device-client-list">
+                <Client v-for="(client,index) in device.clients" :key="index" :client="client"></Client>
+            </div>
+        </div>
+    </script>
+    <script type="text/template" id="Server">
+        <div style="border:1px solid #ccc;padding:4px;margin-bottom:10px;margin-top:10px;">
+            <div>
+                <div>
+                    UUID: <input type="text" v-model="server.Server_UUID" style="width:240px;"><br>
+                    isServerRun: {{server.isServerRun}}
+                    <button type="button" v-if="!server.isServerRun" @click="startServer(server)">开启服务</button>
+                    <button type="button" v-if="server.isServerRun" @click="stopServer(server)">停止服务</button>
+                    <button type="button" v-if="!server.isServerRun" @click="removeServer(server)">移除服务</button>
+                </div>
+            </div>
+            连接的客户端:
+            <div class="device-item" v-if="server.client&&server.client.isConnected">
+                <div class="device-info active">
+                    <div class="device-name">{{server.client.name}}</div>
+                    <div class="device-address">{{server.client.address}}</div>
+                    <div class="device-option">
+                        <button type="button" @click="disconnectServerClient(server)">主动断开</button>
+                    </div>
+                </div>
+                <div class="device-data">
+                    <div class="device-write">
+                        <textarea rows="3" v-model="server.client.sendDataStr"
+                            placeholder="hex格式: 01 23 AB CD EF"></textarea>
+                        <div class="device-setting">
+                            <select v-model="server.client.charset">
+                                <option>UTF-8</option>
+                                <option>GBK</option>
+                            </select>
+                            <button type="button" @click="sendDataServer(server,false)"
+                                style="margin-bottom:8px;">发送string</button>
+                            <button type="button" @click="sendDataServer(server,true)">发送hex</button>
+                        </div>
+                    </div>
+                    <div class="device-read">
+                        <div class="device-read-wrap">
+                            <div ref="readDataScroll" class="device-read-box scroll-box">
+                                <div class="read-msg-item" v-for="(msg,idx) in server.client.receiveDataArr"
+                                    :key="idx">
+                                    {{msg}}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="device-setting">
+                            <div>
+                                接收格式:
+                                <span v-if="server.client.isReturnHex">hex</span>
+                                <span v-else>string({{server.client.returnStrCharset}})</span>
+                            </div>
+                            <select v-model="server.client.returnStrCharset" @change="setReadDataCallbackServerClient(server,false)">
+                                <option>UTF-8</option>
+                                <option>GBK</option>
+                            </select>
+                            <button type="button" @click="setReadDataCallbackServerClient(server,false)">返回string</button>
+                            <button type="button" @click="setReadDataCallbackServerClient(server,true)">返回hex</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </script>
+
+    <div id="app">
+        <button type="button" @click="refreshPage()">刷新页面看看有没有bug</button>
+        <p>蓝牙状态:</p>
+        <div>
+            enableBluetooth: {{base.enableBluetooth}}<br>
+            bluetoothStatus: {{base.bluetoothStatus}}<br>
+            isFindding: {{base.isFindding}}<br>
+        </div>
+        <button type="button" @click="isEnabledBluetooth()">获取蓝牙状态</button>
+        <button type="button" @click="openBluetooth()">打开蓝牙</button>
+        <button type="button" @click="closeBluetooth()">关闭蓝牙</button>
+        <button type="button" @click="isScanning()">检查是否正在扫描设备</button>
+        <button type="button" @click="scan()">搜索设备</button>
+        <button type="button" @click="stopScan()">停止搜索</button>
+
+        <p>
+            日志:
+        </p>
+        <div class="msg-list scroll-box" id="msgBox">
+            <div class="msg-item" v-for="(item,index) in optionLogs" :class="[item.type]">
+                <div class="msg-item-name">{{item.name}}</div>
+                <div class="msg-item-msg">{{item.msg}}</div>
+            </div>
+        </div>
+
+        <p>
+            绑定的设备:
+        </p>
+        <div>
+            <Device v-for="(device,index) in pairedDevices" :key="index" :device="device"></Device>
+        </div>
+
+        <p>
+            搜索到的设备:
+        </p>
+        <div>
+            <Device v-for="(device,index) in newDevices" :key="index" :device="device"></Device>
+        </div>
+
+        <div class="server-section">
+            <div style="text-align:center;font-size:20px;margin:5px;">蓝牙串口服务端</div>
+            <button type="button" @click="addServer()">添加一个串口服务端</button>
+            <Server v-for="(server,index) in servers" :key="index" :server="server"></Server>
+        </div>
+        <div style="height:200px;"></div>
+    </div>
+
+    <script type="text/javascript">
+        function isType(val) {
+            return Object.prototype.toString.call(val).slice(8, -1);
+        }
+
+        function isObject(val) {
+            return isType(val) === 'Object';
+        }
+
+        function isArray(val) {
+            return isType(val) === 'Array';
+        }
+
+        function isFunction(val) {
+            return isType(val) === 'Function';
+        }
+
+        /**
+         * 继承
+         * @param {Object} dest
+         * @param {Object} src
+         * @return {Object}
+         */
+        function extend(dest, src) {
+            if (isObject(dest) || isFunction(dest) && isObject(src)) {
+                for (var key in src) {
+                    if (src.hasOwnProperty(key)) {
+                        if (isObject(src[key])) {
+                            dest[key] = extend(isObject(dest[key]) ? dest[key] : {}, src[key]);
+                        } else if (isArray(src[key])) {
+                            dest[key] = extend(isArray(dest[key]) ? dest[key] : [], src[key]);
+                        } else {
+                            dest[key] = src[key];
+                        }
+                    }
+                }
+            } else if (isArray(dest) && isArray(src)) {
+                for (var i = 0, len = src.length; i < len; i++) {
+                    if (isObject(src[i])) {
+                        dest.push(extend({}, src[i]));
+                    } else if (isArray(src[i])) {
+                        dest.push(extend([], src[i]));
+                    } else {
+                        dest.push(src[i]);
+                    }
+                }
+            }
+            return dest;
+        }
+
+        /**
+         * 深度克隆
+         * @param {Object} obj
+         * @return {Object}
+         */
+        function clone(obj) {
+            if (isObject(obj)) {
+                return extend({}, obj);
+            } else if (isArray(obj)) {
+                return extend([], obj);
+            } else {
+                return obj;
+            }
+        }
+    </script>
+
+    <script type="text/javascript">
+        let createDeviceId = 0;
+
+        const SPPClientTpl = {
+            UUID: "00001101-0000-1000-8000-00805F9B34FB",
+            name: "",
+            address: "",
+            isConnected: false,
+            isConnecting: false,
+            isReturnHex: false,
+            readBufferSize: 1024,
+            returnStrCharset: "UTF-8",//返回字符串的字符集
+
+            sendDataStr: "",
+            charset: "UTF-8",//发送字符串的字符集
+            receiveDataArr: [],
+        }
+
+        const SPPServerTpl = {
+            isServerRun: false,
+            Server_UUID: "00001101-0000-1000-8000-00805F9B34FB",
+            client: null
+        }
+
+        const SPPClientArr = [];
+
+        window.apiready = function () {
+            init();
+        }
+
+        function checkHexStr(dataStr) {
+            dataStr = dataStr.replace(/\s/g, "");
+            if (dataStr.length % 2 != 0) {
+                return "";
+            }
+            if (/[0-9A-Fa-f]/g.test(dataStr)) {
+                return dataStr;
+            }
+            return "";
+        }
+
+        Vue.component('Client', {
+            template: "#Client",
+            props: {
+                client: {
+                    type: Object,
+                    required: true
+                }
+            },
+            created() {
+                this.setReadDataCallbackSPP(this.client);
+            },
+            methods: {
+                setScrollBottom() {
+                    this.$nextTick(() => {
+                        let readDataScrollRef = this.$refs.readDataScroll;
+                        if (readDataScrollRef) {
+                            readDataScrollRef.scrollTop = readDataScrollRef.scrollHeight;
+                        }
+                    })
+                },
+                removeClient() {
+                    this.$parent.removeClient(this.client);
+                },
+                connectSPP(client) {
+                    let existClient = this.$parent.device.clients.find((item) => {
+                        return item != client && item.UUID == client.UUID;
+                    })
+                    if (existClient) {
+                        alert("该UUID已存在!");
+                        return;
+                    }
+
+                    client.isConnecting = true;
+                    client.isConnected = false;
+                    api.require('cxgBluetoothClient').connect({
+                        UUID: client.UUID,
+                        address: client.address
+                    }, (ret, err) => {
+                        //多次返回
+                        if (!err) {
+                            if (ret.data === true) {
+                                client.isConnected = true;
+                                client.isConnecting = false;
+                                this.setReadDataCallbackSPP(client);
+                                this.$root.addSuccessLog("connectSPP", "连接成功:" + client.name);
+                                this.$root.addClientToArr(client);
+                                this.$root.addClientToDevice(this.$parent.device, client);
+                            }
+                            //设备断开
+                            if (ret.data.disconnectAddress) {
+                                if (client.address == ret.data.disconnectAddress) {
+                                    client.isConnected = false;
+                                    client.isConnecting = false;
+                                    this.$root.addSuccessLog("connectSPP", "断开连接:" + client.name);
+                                }
+                            }
+                            if (ret.data === false) {
+                                client.isConnected = false;
+                                client.isConnecting = false;
+                                this.$root.addSuccessLog("connectSPP", "断开连接:" + client.name);
+                            }
+                        } else {
+                            client.isConnecting = false;
+                            client.isConnected = false;
+                            this.$root.addErrorLog("connectSPP", err.code, err.msg);
+                        }
+                    })
+                },
+                disconnectSPP(client) {
+                    api.require('cxgBluetoothClient').disconnect({
+                        address: client.address,
+                        UUID: client.UUID
+                    }, (ret, err) => {
+                        if (!err) {
+                            client.isConnecting = false;
+                            client.isConnected = false;
+                            this.$root.addSuccessLog("disconnect", "断开连接成功:" + client.name);
+                        } else {
+                            this.addErrorLog("disconnect", err.code, err.msg);
+                            client.isConnecting = false;
+                        }
+                    })
+                },
+                sendDataSPP(client, isHex = false) {
+                    let dataStr = client.sendDataStr;
+                    if (isHex) {
+                        dataStr = checkHexStr(dataStr);
+                    }
+                    if (!dataStr) {
+                        return;
+                    }
+                    api.require('cxgBluetoothClient').sendData({
+                        data: dataStr,
+                        isHex: isHex,
+                        address: client.address,
+                        UUID: client.UUID,
+                        charset: client.charset,
+                    }, (ret, err) => {
+                        if (!err) {
+                            this.$root.addSuccessLog("sendDataSPP", "发送数据成功");
+                        } else {
+                            this.$root.addErrorLog("sendDataSPP", err.code, err.msg);
+                        }
+                    })
+                },
+                setReadDataCallbackSPP(client, isHex = false) {
+                    if (!client.isConnected) {
+                        return;
+                    }
+                    api.require('cxgBluetoothClient').setReadDataCallback({
+                        address: client.address,
+                        UUID: client.UUID,
+                        bufferSize: client.readBufferSize,
+                        isReturnHex: isHex,
+                        isNoReturnData: false,
+                        returnStrCharset: client.returnStrCharset,
+                    }, (ret, err) => {
+                        if (!err) {
+                            if (ret.data === true) {
+                                client.isReturnHex = isHex;
+                                return;
+                            }
+                            if (client.receiveDataArr.length > 20) {
+                                client.receiveDataArr = [];
+                            }
+                            client.receiveDataArr.push(ret.data);
+                            this.setScrollBottom();
+                        } else {
+                            client.isConnected = false;
+                            this.$root.addErrorLog("readCallback", err.code, err.msg);
+                        }
+                    })
+                },
+            }
+        })
+
+        Vue.component('Device', {
+            template: "#Device",
+            props: {
+                device: {
+                    type: Object,
+                    required: true
+                }
+            },
+            created() {
+
+            },
+            methods: {
+                createClient(device) {
+                    let client = clone(SPPClientTpl);
+                    client.name = device.name;
+                    client.address = device.address;
+                    device.clients.push(client);
+                },
+                removeClient(client) {
+                    let device = this.device;
+                    let index = device.clients.findIndex((item) => {
+                        return item == client;
+                    })
+                    if (index > -1) {
+                        device.clients.splice(index, 1);
+                    }
+                },
+            }
+        })
+
+        Vue.component('Server', {
+            template: "#Server",
+            props: {
+                server: {
+                    type: Object,
+                    required: true
+                }
+            },
+            created() {
+                if (this.server.isServerRun) {
+                    this.startServer(this.server);
+                }
+                this.setReadDataCallbackServerClient(this.server);
+            },
+            methods: {
+                removeServer() {
+                    this.$root.removeServer(this.server);
+                },
+                setScrollBottom() {
+                    this.$nextTick(() => {
+                        let readDataScrollRef = this.$refs.readDataScroll;
+                        if (readDataScrollRef) {
+                            readDataScrollRef.scrollTop = readDataScrollRef.scrollHeight;
+                        }
+                    })
+                },
+                startServer(server) {
+                    if (!server) {
+                        return;
+                    }
+                    api.require('cxgBluetoothServer').startServer({
+                        isNewStartServer: false,
+                        Server_UUID: server.Server_UUID
+                    }, (ret, err) => {
+                        if (!err) {
+                            //多次返回
+                            if (isObject(ret.data)) {
+                                //设备连接
+                                if (ret.data.address) {
+                                    let client = clone(SPPClientTpl);
+                                    client.name = ret.data.name;
+                                    client.address = ret.data.address;
+                                    client.isConnected = true;
+                                    server.client = client;
+                                    this.setReadDataCallbackServerClient(server);
+                                }
+                                //设备断开
+                                if (ret.data.disconnectAddress) {
+                                    if (server.client && server.client.address == ret.data.disconnectAddress) {
+                                        server.client = null;
+                                    }
+                                }
+                            }
+                            //创建服务成功
+                            if (ret.data === true) {
+                                server.isServerRun = true;
+                                this.setReadDataCallbackServerClient(server);
+                                this.$root.addSuccessLog("startServer", "服务开启成功!");
+                            }
+                        } else {
+                            if (err.code === -1) {
+                                server.isServerRun = false;
+                            }
+                            this.$root.addErrorLog("startServer", err.code, err.msg);
+                        }
+                    })
+                },
+                stopServer(server) {
+                    if (!server.isServerRun) {
+                        return;
+                    }
+                    api.require('cxgBluetoothServer').stopServer({
+                        Server_UUID: server.Server_UUID,
+                        isRemove: false
+                    }, (ret, err) => {
+                        if (!err) {
+                            server.isServerRun = false;
+                            server.client = null;
+                            this.$root.addSuccessLog("stopServer", "服务停止!");
+                        } else {
+                            this.$root.addErrorLog("stopServer", err.code, err.msg);
+                        }
+                    })
+                },
+                disconnectServerClient(server) {
+                    api.require('cxgBluetoothServer').disconnectServerClient({
+                        Server_UUID: server.Server_UUID
+                    }, (ret, err) => {
+                        if (!err) {
+                            this.$root.addSuccessLog("disconnectServerClient", "断开连接成功");
+                        } else {
+                            this.$root.addErrorLog("disconnect", err.code, err.msg);
+                        }
+                    })
+                },
+                sendDataServer(server, isHex = false) {
+                    let client = server.client;
+                    if (!client) {
+                        return;
+                    }
+                    let dataStr = client.sendDataStr;
+                    if (isHex) {
+                        dataStr = checkHexStr(dataStr);
+                    }
+                    if (!dataStr) {
+                        return;
+                    }
+                    api.require('cxgBluetoothServer').sendDataServerClient({
+                        Server_UUID: server.Server_UUID,
+                        data: dataStr,
+                        isHex: isHex,
+                        charset: client.charset,
+                    }, (ret, err) => {
+                        if (!err) {
+                            this.$root.addSuccessLog("sendDataServer", "发送数据成功");
+                        } else {
+                            this.$root.addErrorLog("sendDataServer", err.code, err.msg);
+                        }
+                    })
+                },
+                setReadDataCallbackServerClient(server, isHex = false) {
+                    let client = server.client;
+                    if (!client) {
+                        return;
+                    }
+                    api.require('cxgBluetoothServer').setReadDataCallbackServerClient({
+                        Server_UUID: server.Server_UUID,
+                        bufferSize: client.readBufferSize,
+                        isReturnHex: isHex,
+                        isNoReturnData: false,
+                        returnStrCharset: client.returnStrCharset
+                    }, (ret, err) => {
+                        if (!err) {
+                            if (ret.data === true) {
+                                client.isReturnHex = isHex;
+                                return;
+                            }
+                            if (client.receiveDataArr.length > 20) {
+                                client.receiveDataArr = [];
+                            }
+                            client.receiveDataArr.push(ret.data);
+                            this.setScrollBottom("readMsgScroll_0");
+                        } else {
+                            client.isConnected = false;
+                            server.client = null;
+                            this.$root.addErrorLog("readCallbackServer", err.code, err.msg);
+                        }
+                    })
+                },
+            }
+        })
+
+        function init() {
+            new Vue({
+                el: "#app",
+                data() {
+                    return {
+                        base: {
+                            isFindding: false, //是否正在查询设备
+                            enableBluetooth: false, //是否启用蓝牙
+                            bluetoothStatus: "", //蓝牙状态
+                        },
+                        pairedDevices: [], //已配对的设备 SPPClientTpl
+                        newDevices: [], //新查找的设备 SPPClientTpl
+                        optionLogs: [],
+                        servers: [],//开启的服务 SPPServerTpl
+                    }
+                },
+                created() {
+                    this.isEnabledBluetooth();
+                    this.listenBluetoothStatus();
+                    this.bondedDevices();
+                    this.syncClientsInfo();
+                    this.syncServersInfo();
+                    api.setScreenOrientation({
+                        orientation: 'portrait_up' //屏幕根据重力感应在横屏间自动切换
+                    });
+                },
+                methods: {
+                    refreshPage() {
+                        location.reload();
+                    },
+                    setScrollBottom(id) {
+                        this.$nextTick(() => {
+                            let ele = document.getElementById(id);
+                            if (ele) {
+                                ele.scrollTop = ele.scrollHeight;
+                            }
+                        })
+                    },
+                    addErrorLog(name, code, msg) {
+                        if (this.optionLogs.length > 50) {
+                            this.optionLogs.splice(0, 20);
+                        }
+                        this.optionLogs.push({
+                            name,
+                            msg: "code: " + code + " " + msg,
+                            type: "error"
+                        });
+                        this.setScrollBottom("msgBox");
+                    },
+                    addSuccessLog(name, msg) {
+                        if (this.optionLogs.length > 50) {
+                            this.optionLogs.splice(0, 20);
+                        }
+                        this.optionLogs.push({
+                            name, msg,
+                            type: "success"
+                        });
+                        this.setScrollBottom("msgBox");
+                    },
+                    createSPPClient(address, UUID) {
+                        let client = SPPClientArr.find((item) => {
+                            return item.address == address && item.UUID == UUID;
+                        })
+                        if (!client) {
+                            client = clone(SPPClientTpl);
+                            client.address = address;
+                            client.UUID = UUID;
+                            SPPClientArr.push(client);
+                        }
+                        return client;
+                    },
+                    addClientToArr(client) {
+                        let haveClient = SPPClientArr.find((item) => {
+                            return item.address == client.address && item.UUID == client.UUID;
+                        })
+                        if (!haveClient) {
+                            SPPClientArr.push(client);
+                        }
+                    },
+                    addClientToDevice(device, client) {
+                        if (!device.clients) {
+                            device.clients = [];
+                        }
+                        if (device.address == client.address) {
+                            let existClient = device.clients.find((item) => {
+                                return item === client;
+                            })
+                            if (!existClient) {
+                                device.clients.push(client);
+                            }
+                        }
+                    },
+                    syncClientToDevices() {
+                        SPPClientArr.forEach((client) => {
+                            this.pairedDevices.forEach((device) => {
+                                this.addClientToDevice(device, client);
+                            })
+                            this.newDevices.forEach((device) => {
+                                this.addClientToDevice(device, client);
+                            })
+                        })
+                    },
+                    isEnabledBluetooth() {
+                        api.require('cxgBluetoothBase').isEnabledBluetooth({}, (ret, err) => {
+                            if (!err) {
+                                this.base.enableBluetooth = ret.state;
+                                this.addSuccessLog("isEnabledBluetooth", "蓝牙状态:" + ret.state);
+                            } else {
+                                this.addErrorLog("isEnabledBluetooth", err.code, err.msg);
+                            }
+                        })
+                    },
+                    openBluetooth() {
+                        api.require('cxgBluetoothBase').openBluetooth({}, (ret, err) => {
+                            if (!err) {
+                                this.base.enableBluetooth = true;
+                                this.addSuccessLog("openBluetooth", "打开蓝牙成功");
+                            } else {
+                                this.addErrorLog("openBluetooth", err.code, err.msg);
+                            }
+                        })
+                    },
+                    closeBluetooth() {
+                        api.require('cxgBluetoothBase').closeBluetooth({}, (ret, err) => {
+                            if (!err) {
+                                if (ret.state) {
+                                    this.addSuccessLog("closeBluetooth", "蓝牙已经关闭");
+                                } else {
+                                    this.addSuccessLog("closeBluetooth", "蓝牙正在关闭");
+                                }
+                            } else {
+                                this.addErrorLog("closeBluetooth", err.code, err.msg);
+                            }
+                        })
+                    },
+                    listenBluetoothStatus() {
+                        api.require('cxgBluetoothBase').listenBluetoothStatus({}, (ret, err) => {
+                            if (!err) {
+                                let status = ret.status;
+                                this.base.bluetoothStatus = status;
+                                this.addSuccessLog("listenBluetoothStatus", "蓝牙状态变化: " + status);
+                                switch (status) {
+                                    case "STATE_ON":
+                                        this.base.enableBluetooth = true;
+                                        this.bondedDevices();
+                                        break;
+                                    case "STATE_OFF":
+                                        this.base.enableBluetooth = false;
+                                        break;
+                                }
+                            } else {
+                                this.addErrorLog("listenBluetoothStatus", err.code, err.msg);
+                            }
+                        })
+                    },
+                    bondedDevices() {
+                        api.require('cxgBluetoothBase').bondedDevices({}, (ret, err) => {
+                            if (!err) {
+                                ret.data.forEach((device) => {
+                                    device.clients = [];
+                                })
+                                this.pairedDevices = ret.data;
+                                this.syncClientToDevices();
+                                this.addSuccessLog("bondedDevices", "获取已绑定设备成功");
+                            } else {
+                                this.addErrorLog("bondedDevices", err.code, err.msg);
+                            }
+                        })
+                    },
+                    isScanning() {
+                        api.require('cxgBluetoothBase').isScanning({}, (ret, err) => {
+                            if (!err) {
+                                this.base.isFindding = ret.state;
+                                this.addSuccessLog("isScanning", "正在扫描: " + ret.state);
+                            } else {
+                                this.addErrorLog("isScanning", err.code, err.msg);
+                            }
+                        })
+                    },
+                    scan() {
+                        this.newDevices = [];
+                        api.require('cxgBluetoothBase').scan({}, (ret, err) => {
+                            if (!err) {
+                                if (ret.data === "ACTION_DISCOVERY_FINISHED") {
+                                    this.base.isFindding = false;
+                                    this.addSuccessLog("scan", "搜索完成");
+                                }
+                                if (ret.data === true) {
+                                    this.base.isFindding = true;
+                                    this.addSuccessLog("scan", "开始搜索");
+                                }
+                                if (typeof ret.data === "object") {
+                                    ret.data.clients = [];
+                                    this.newDevices.push(ret.data);
+                                    this.addSuccessLog("scan", "获取到新设备: " + ret.data.name);
+                                }
+                            } else {
+                                this.base.isFindding = false;
+                                this.addErrorLog("scan", err.code, err.msg);
+                            }
+                        })
+                    },
+                    stopScan() {
+                        api.require('cxgBluetoothBase').stopScan({}, (ret, err) => {
+                            if (!err) {
+                                this.base.isFindding = false;
+                                this.addSuccessLog("stopScan", "停止扫描成功");
+                            } else {
+                                this.addErrorLog("stopScan", err.code, err.msg);
+                            }
+                        })
+                    },
+                    syncClientsInfo() {
+                        api.require('cxgBluetoothClient').syncClientsInfo({}, (ret, err) => {
+                            if (!err) {
+                                SPPClientArr.forEach((client) => {
+                                    client.isConnected = false;
+                                })
+                                ret.data.forEach((item) => {
+                                    let client = this.createSPPClient(item.address, item.UUID);
+                                    client.isConnected = true;
+                                    Object.assign(client, item);
+                                })
+                                this.syncClientToDevices();
+                                this.addSuccessLog("syncClientsInfo", "同步数据成功");
+                            } else {
+                                this.addErrorLog("syncClientsInfo", err.code, err.msg);
+                            }
+                        })
+                    },
+
+                    //-----------------------------------服务端-------------------------------
+                    syncServersInfo() {
+                        api.require('cxgBluetoothServer').syncServersInfo({
+                        }, (ret, err) => {
+                            if (!err) {
+                                this.servers = [];
+                                for (let item of ret.data) {
+                                    let server = clone(SPPServerTpl);
+                                    server.Server_UUID = item.Server_UUID;
+                                    server.isServerRun = item.isServerRun;
+                                    if (item.client) {
+                                        let client = clone(SPPClientTpl);
+                                        //有设备返回一定是处于连接状态
+                                        client.isConnected = true;
+                                        Object.assign(client, item.client);
+                                        server.client = client;
+                                    } else {
+                                        server.client = null;
+                                    }
+                                    this.servers.push(server);
+                                }
+                                this.addSuccessLog("syncServerInfo", "服务信息同步成功!");
+                            } else {
+                                this.addErrorLog("syncServerInfo", err.code, err.msg);
+                            }
+                        })
+                    },
+                    addServer() {
+                        let server = clone(SPPServerTpl);
+                        this.servers.push(server);
+                    },
+                    removeServer(server) {
+                        let index = this.servers.findIndex((item) => {
+                            return item == server;
+                        })
+                        if (index > -1) {
+                            this.servers.splice(index, 1);
+                        }
+                    },
+                },
+                mounted() {
+
+                }
+            })
+        }
+
+    </script>
+</body>
+
+</html>
